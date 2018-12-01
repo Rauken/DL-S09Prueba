@@ -21,43 +21,42 @@ var icons = {
     'partly-cloudy-day': 'img/cloudy-day.png'
 };
 $(document).ready(function() {
-
     generarMapa();
-    ajaxCall(coords['santiago']);
+    ajaxCall(coords['valparaiso']);
     $(document).on('change', '#select', function() {
         var selected = $(this).val();
         if (selected != "") {
             ajaxCall(coords[selected]);
         }
     });
+    //Genera el primer mapa
+    function generarMapa() {
+        mymap = L.map('mapid').setView([-33.0458456, -71.6196749], 13);
+        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            maxZoom: 18,
+            id: 'mapbox.streets',
+            accessToken: 'pk.eyJ1IjoiZXVycXVldGEiLCJhIjoiY2pveWs1YTh2Mms0bzNrcGl1OWdremtpdiJ9.fxU81NktFjsaHLFxgN5WHA'
+        }).addTo(mymap);
+        var marker = L.marker([-33.0458456, -71.6196749]).addTo(mymap);
+    }
+    //Generador de clima, llama el mapa
+    function ajaxCall(coords) {
+        $.ajax({
+            url: url + key + coords + '?' + queryParams[0] + "&" + queryParams[1] + '&' + queryParams[2],
+            method: 'GET',
+            success: function(data) {
+                $('#resumen').text(parseInt(data.currently.temperature) + "º " + data.currently.summary);
+                $('#image').attr('src', icons[data.currently.icon]);
+                changeMarkerPosition(coords);
+            }
+        });
+    }
+    //Nueva posicion con marcador
+    function changeMarkerPosition(coords) {
+        var latitud = coords.split(",")[0];
+        var longitud = coords.split(",")[1];
+        mymap.panTo(new L.LatLng(latitud, longitud));
+        L.marker([latitud, longitud]).addTo(mymap);
+    }
 });
-
-function ajaxCall(coords) {
-    $.ajax({
-        url: url + key + coords + '?' + queryParams[0] + "&" + queryParams[1] + '&' + queryParams[2],
-        method: 'GET',
-        success: function(data) {
-            $('#resumen').text(parseInt(data.currently.temperature) + "º " + data.currently.summary);
-            $('#image').attr('src', icons[data.currently.icon]);
-            changeMarkerPosition(coords);
-        }
-    });
-}
-
-function generarMapa() {
-    var mymap = L.map('mapid').setView([-33.4377968, -70.6504451], 13);
-    L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-        maxZoom: 18,
-        id: 'mapbox.streets',
-        accessToken: 'pk.eyJ1IjoiZXVycXVldGEiLCJhIjoiY2pveWs1YTh2Mms0bzNrcGl1OWdremtpdiJ9.fxU81NktFjsaHLFxgN5WHA'
-    }).addTo(mymap);
-    var marker = L.marker([-33.4377968, -70.6504451]).addTo(mymap);
-}
-
-function changeMarkerPosition(coords) {
-    var latitud = coords.split(",")[0];
-    var longitud = coords.split(",")[1];
-    mymap.panTo(new L.LatLng(latitud, longitud));
-    L.marker([latitud, longitud]).addTo(mymap);
-}
